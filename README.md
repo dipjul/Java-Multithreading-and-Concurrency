@@ -482,7 +482,61 @@ A thread that is waiting for another thread to perform an action for up to a spe
 
 A thread that has exited i.e. it has either completed its task or terminated in the middle of the execution.
 
-
+![](https://github.com/dipjul/Java-Multithreading-and-Concurrency/blob/545ff854350c325820b1ce724709548ffbd461af/2018-10-23_05-09-17-d049f04475d6816447ea19b7777b57c5.png)
 
 ### `yield()` method -
 yield() method is important in few scenarios, suppose a thread is given 5 min of CPU time, now after a minute thread knows that it doesn't need the CPU anymore with in that time period, in such scenarios do you think that blocking the CPU for the next four minutes is a good idea ? No, it is better to pass on the control to the threads if any waiting for CPU and that is when we can use the yield() method. Usage Thread.yield(), it is a static method of the Thread class and it affects the current thread from which the method is invoked.
+
+<hr>
+
+## Thread Priorities
+Let us look at how we can change the thread priorities.
+
+> Thread priorities range between 1 and 10.
+
+### MIN_PRIORITY - 1 being the minimum priority
+
+### NORM_PRIORITY - 5 is the normally priority, this is the default priority value.
+
+### MAX_PRIORITY - 10 being the max priority.
+
+### `setPriority(int newPriority)`  -
+A method in the Thread class, this is used to set the new priority for the thread. If the newPriority value is more than the maximum priority allowed for the group then maximum priority is considered, i.e. if you try to set 15 then it takes only 10. And for a given ThreadGroup if the maximum allowed priority is 7 then any thread with in that group can have a maximum of 7.
+
+Example -
+Just think about a software installer app, the thread that copies the files should be given more priority than the thread which display the progress etc, that speeds up the installation process. Below example demonstrates setting higher priority for copyThread.
+```java
+class CopyTask implements Runnable {
+    @Override
+    public void run() {
+	while(true) {
+	    System.out.print("C");
+	}
+    }
+}
+ 
+class ProgressTask implements Runnable {
+    @Override
+    public void run() {
+	while(true) {
+	    System.out.print("-");
+	}
+    }
+}
+ 
+public class Main {
+ 
+    public static void main(String[] args) {
+	CopyTask copyTask = new CopyTask();
+	Thread copyThread = new Thread(copyTask);
+	copyThread.setPriority(Thread.NORM_PRIORITY + 3);
+	copyThread.start();
+		
+	ProgressTask progressTask = new ProgressTask();
+	Thread progressThread = new Thread(progressTask);
+	progressThread.start();
+    }
+}
+```
+
+<hr>
