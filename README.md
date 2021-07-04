@@ -540,3 +540,105 @@ public class Main {
 ```
 
 <hr>
+
+
+## Internal System Threads and ThreadGroup
+### `Thread.currentThread()` -
+
+`currentThread()` is a static method in the class Thread and all the static method in the Thread class normally operate on the thread in which it is being executed. Here Thread.currentThread() returns a reference to the current thread i.e. the main thread.
+
+### `getThreadGroup()` - [Thread class method]
+
+A Thread class method that returns a reference to the ThreadGroup to which the corresponding thread instance belongs.
+
+### `getParent()` - [ThreadGroup class method]
+
+A ThreadGroup class method that returns a reference to the parent thread group if any. If there is no parent then this method returns null.
+
+### `setMaxPriority(int maxPriority)` - [ThreadGroup class method]
+
+Sets the maximum priority for that group so that no thread can exceed this priority with in the group.
+
+Example -
+```java
+public class Main {
+ 
+    public static void main(String[] args) {
+	System.out.println("System threads..........");
+	Thread thr = Thread.currentThread();
+	ThreadGroup grp = thr.getThreadGroup();
+	while (grp.getParent() != null) {
+	    grp = grp.getParent();
+	}
+	grp.list();
+    }
+}
+```
+```
+Sample Output -
+NOTE - OUTPUT MAY VARY WITH JAVA VERSION.
+
+System threads..........
+java.lang.ThreadGroup[name=system,maxpri=10]
+    Thread[Reference Handler,10,system]
+    Thread[Finalizer,8,system]
+    Thread[Signal Dispatcher,9,system]
+    java.lang.ThreadGroup[name=main,maxpri=10]
+        Thread[main,5,main]
+```
+
+### Associating a Thread with ThreadGroup -
+Straight forward, create an instance of the ThreadGroup and give it a name. You can do group level operations over the ThreadGroup object. To associate a thread with the thread group, pass the thread group reference to the Thread class constructor.
+
+Example -
+```java
+class MyTask implements Runnable {
+	
+    @Override 
+    public void run() {
+	try {
+	    Thread.sleep(5000);
+	} catch (InterruptedException e) {
+	    e.printStackTrace();
+	}
+    }
+}
+public class Main {
+ 
+    public static void main(String[] args) {
+		
+	// CREATING A THREADGROUP
+	ThreadGroup myGroup = new ThreadGroup("MyGroup");
+	myGroup.setMaxPriority(4);
+		
+	// ASSOCIATING A THREAD WITH THREAD GROUP
+	Thread myThread = new Thread(myGroup, new MyTask(), "DemoThread");
+	myThread.start();
+	
+	System.out.println("System threads..........");
+	Thread thr = Thread.currentThread();
+	ThreadGroup grp = thr.getThreadGroup();
+	while (grp.getParent() != null) {
+	    grp = grp.getParent();
+	}
+	grp.list();	
+    }
+}
+```
+```
+Sample Output -
+System threads..........
+java.lang.ThreadGroup[name=system,maxpri=10]
+    Thread[Reference Handler,10,system]
+    Thread[Finalizer,8,system]
+    Thread[Signal Dispatcher,9,system]
+    java.lang.ThreadGroup[name=main,maxpri=10]
+        Thread[main,5,main]
+        java.lang.ThreadGroup[name=MyGroup,maxpri=4]
+            Thread[DemoThread,4,MyGroup]
+```
+<strong>Technical Note</strong> -
+<em>It is important to note that even the main method runs with a thread called the main thread. And its default priority is 5.</em>
+
+<hr>
+
