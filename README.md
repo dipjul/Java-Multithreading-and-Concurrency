@@ -642,3 +642,175 @@ java.lang.ThreadGroup[name=system,maxpri=10]
 
 <hr>
 
+## Daemon Threads
+
+Daemon threads are the ones which does not prevent the JVM from exiting the application once it finishes. Daemon threads are handy for performing background tasks such as garbage collection or collecting application statistics etc. Note that the Java Virtual Machine exits when the only threads running are all daemon threads.
+
+### Example -
+In the below example at the end of the while loop grp will point to system thread group. And enumerate method lists the threads in that group and copies the references to the given array. It also returns the number of threads copied. And later I am printing the thread name along with the boolean value checking if it is a daemon thread or not, using the method `isDaemon()`.
+```java
+    public class Main1 {
+     
+        public static void main(String[] args) {
+    		
+    	System.out.println("System threads..........");
+    		
+    	Thread thr = Thread.currentThread();
+    	ThreadGroup grp = thr.getThreadGroup();
+    	while (grp.getParent() != null) {
+    	    grp = grp.getParent();
+    	}
+    		
+    	Thread [] threads = new Thread[10];
+    	int n = grp.enumerate(threads);
+    		
+    	for (int i=0; i < n; i++) {
+    	    System.out.println(
+    		"Thread Name: " + threads[i].getName() + 
+    		" ; isDaemon: " + threads[i].isDaemon());
+    	}
+        }
+    }
+```
+```
+Output -
+
+    System threads..........
+    Thread Name: Reference Handler ; isDaemon: true
+    Thread Name: Finalizer ; isDaemon: true
+    Thread Name: Signal Dispatcher ; isDaemon: true
+    Thread Name: main ; isDaemon: false
+```
+You can see that Reference Handler, Finalizer, Single Dispatcher all these are daemon threads because they run the background and they doesn't stop the application from exiting.
+### `setDaemon(boolean on)` -
+
+The method of the Thread class makes a enables us to set whether a thread is a daemon thread or user thread.
+Example -
+```java
+    class MyTask implements Runnable {
+    	
+        @Override
+        public void run() {
+    	for (;;) {
+    	    System.out.print("T");
+    	}
+        }
+    }
+    public class Main {
+        public static void main(String[] args) {	
+    	Thread thr = new Thread(new MyTask());
+    	thr.setDaemon(true);
+    	thr.start();
+    		
+    	for (int i=1; i <= 200; i++) {
+    	    System.out.print(" M ");
+    	}
+        }
+    }
+```
+```
+Output -
+
+MMTTMMT
+```
+A combination of M and T but the application ends once the main ends.
+<hr>
+
+## Callable Task
+### Callable interface -
+
+Unlike Runnable, Callable interface allows us to create an asynchronous task which is capable of returning an Object.
+```java
+    interface Callable<V> {
+        V call() throws Exception;
+    }
+```
+If you implement Runnable interface we can not return any result. But if you implement Callable interface then you can return the result as well. Like `run()` method in the Runnable interface, you need to override the `call()` method. The return type of the `call()` method should match with the intended return type of the result. `Callable<Double>` means the call method returns `Double` value,  `Callable<Fruit>` means call method returns an instance of type Fruit.
+```java
+    class GetStockQuoteTask implements Callable<Double> {
+    	
+        private String stockSymbol;
+     
+        public GetStockQuoteTask(String stockSymbol) {
+    	this.stockSymbol = stockSymbol;
+        }
+     
+        public Double call() {
+    	// Write some logic to fetch the stock price
+    	// for the given symbol and return it.
+    	return 0.0;
+        }
+    }
+```
+To submit this task for execution, you can use the submit method on the `ExecutorService`.
+```java
+    String symbol = "ABCD";
+    GetStockQuoteTask task = new GetStockQuoteTask(symbol);
+    Future<Double> future = executor.submit( task );
+    Double price = future.get();
+```
+
+### Future Object -
+
+When you submit a Callable task to the ExecutorService, it returns a Future object. This object enables us to access the request and check for the result of the operation if it is completed.
+
+### Important methods -
+
+#### `isDone()` - Returns true if the task is done and false otherwise.
+
+#### `get()` - Returns the result if the task is done, otherwise waits till the task is done and then it returns the result.
+
+#### `cancel(boolean mayInterrupt)` - Used to stop the task, stops it immediately if not started, otherwise interrupts the task only if mayInterrupt is true.
+
+
+Example -
+
+```java
+    import java.util.concurrent.Callable;
+    import java.util.concurrent.ExecutorService;
+    import java.util.concurrent.Executors;
+    import java.util.concurrent.Future;
+     
+    class MyMath {
+        public static int add(int a, int b) {
+            return a + b;
+        }
+    }
+     
+    public class Main {
+        
+        public static void main(String[] args) throws Exception {
+    	
+    	int x = 10;
+    	int y = 20;
+    		
+    	ExecutorService executor = 
+                    Executors.newFixedThreadPool(1);
+    	
+            // Submit a Callable task and use the Future
+            // object to fetch the result.	
+    	Future<Integer> future = 
+                        executor.submit(
+    		        new Callable<Integer>() {
+    			    public Integer call() {
+    			        return MyMath.add(x, y);
+    			    }
+    			});
+     
+    	 // do some parallel task
+    	 // Inefficient to simply wait,
+             // instead you can release the CPU 
+             // by calling Thread.yield() inside 
+             // the while loop.	
+    	 while( ! future.isDone())
+    		; // wait
+    	
+             // fetch the result 	
+    	 int z = future.get();
+    		
+    	 System.out.println( "Result is " + z );
+        }
+    }
+    
+    ```
+ <hr>
